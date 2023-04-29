@@ -112,7 +112,9 @@ int vmap_page_range(struct pcb_t *caller, // process call
       return -1;
     }
     int fpn = fpit->fpn;
-    caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xfffff000) | (fpn & 0xfff);
+    // set frame page number bits (from 0 to 12 --> 13 bits)
+    caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff); 
+    caller->mm->pgd[pageNum] |= 1 << 31; // set present bit to 1
     enlist_pgn_node(&caller->mm->fifo_pgn, pageNum + pgit);
   }
   ret_rg->rg_end = addr + pgit * PAGING_PAGESZ;
