@@ -134,6 +134,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
     return -1;
 
   /* TODO: Manage the collect freed region to freerg_list */
+  rgnode = caller->mm->symrgtbl[rgid];
 
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
@@ -176,8 +177,8 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
   uint32_t pte = mm->pgd[pgn];
  
-  if (!PAGING_PAGE_PRESENT(pte))
-  { /* Page is not online, make it actively living */
+  if (!PAGING_PAGE_PRESENT(pte)) // page is not in RAM (presented bit = 0)
+  {
     int vicpgn, swpfpn; 
     //int vicfpn;
     //uint32_t vicpte;
@@ -215,7 +216,7 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 
 /*pg_getval - read value at given offset
  *@mm: memory region
- *@addr: virtual address to acess 
+ *@addr: virtual address to acesss = currg->rg_start + offset (source + offset)
  *@value: value
  *
  */
@@ -265,7 +266,7 @@ int pg_setval(struct mm_struct *mm, int addr, BYTE value, struct pcb_t *caller)
  *@offset: offset to acess in memory region 
  *@rgid: memory region ID (used to identify variable in symbole table)
  *@size: allocated size 
- *
+ * read [source] [offset] [destination]: read from source and give to destination
  */
 int __read(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE *data)
 {
