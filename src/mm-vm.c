@@ -175,11 +175,12 @@ int pgfree_data(struct pcb_t *proc, uint32_t reg_index)
  */
 int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
-  uint32_t pte = mm->pgd[pgn];
- 
+  uint32_t pte = mm->pgd[pgn]; /* Get the page table entry corresponding to the pgn page from the page table*/
+
   if (!PAGING_PAGE_PRESENT(pte)) // page is not in RAM (presented bit = 0)
-  {
-    int vicpgn, swpfpn; 
+  { /* Page is not online, make it actively living */
+    int vicpgn = -1, swpfpn = -1; 
+
     //int vicfpn;
     //uint32_t vicpte;
 
@@ -195,12 +196,12 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 
     /* Do swap frame from MEMRAM to MEMSWP and vice versa*/
     /* Copy victim frame to swap */
-    //__swap_cp_page();
+    __swap_cp_page(caller->mram, vicpgn, caller->active_mswp, swpfpn);
     /* Copy target frame from swap to mem */
-    //__swap_cp_page();
+    __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicpgn);
 
     /* Update page table */
-    //pte_set_swap() &mm->pgd;
+    pte_set_swap(&mm->pgd[vicpgn], swpfpn, 0); /* Set the pte of victim page to swpfpn (which means it is stored in frame swpfpn) */
 
     /* Update its online status of the target page */
     //pte_set_fpn() & mm->pgd[pgn];
@@ -230,7 +231,7 @@ int pg_getval(struct mm_struct *mm, int addr, BYTE *data, struct pcb_t *caller)
   if(pg_getpage(mm, pgn, &fpn, caller) != 0) 
     return -1; /* invalid page access */
 
-  int phyaddr = (fpn << PAGING_ADDR_FPN_LOBIT) + off;
+  int phyaddr = (fpn << PAGING_ADDR_FPN_LOBIT) + off; /* Shift left by a number of bits equal to size of a frame (for offset)*/
 
   MEMPHY_read(caller->mram,phyaddr, data);
 
@@ -454,8 +455,14 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
 {
   struct pgn_t *pg = mm->fifo_pgn;
 
+  if (pg == NULL) return -1; /* There is no pages in fifo */
+  /* Apply FIFO for find victim page */
   /* TODO: Implement the theorical mechanism to find the victim page */
+  while(pg->pg_next != NULL){
+    pg = pg_next;
+  }
 
+  retpgn = pg->pgn;
   free(pg);
 
   return 0;
@@ -480,7 +487,7 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
   newrg->rg_start = newrg->rg_end = -1;
 
   /* Traverse on list of free vm region to find a fit space */
-  while (rgit != NULL)
+  while (rgit != NULL) /* Use first fit */
   {
     if (rgit->rg_start + size <= rgit->rg_end)
     { /* Current region has enough space */
