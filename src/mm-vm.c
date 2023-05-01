@@ -459,10 +459,10 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
   /* Apply FIFO for find victim page */
   /* TODO: Implement the theorical mechanism to find the victim page */
   while(pg->pg_next != NULL){
-    pg = pg_next;
+    pg = pg->pg_next;
   }
 
-  retpgn = pg->pgn;
+  *retpgn = pg->pgn;
   free(pg);
 
   return 0;
