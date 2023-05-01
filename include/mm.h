@@ -23,8 +23,8 @@
 #define PAGING_PTE_EMPTY02_MASK BIT(13)
 
 /* PTE BIT PRESENT */
-#define PAGING_PTE_SET_PRESENT(pte) (pte=pte|PAGING_PTE_PRESENT_MASK)
-#define PAGING_PAGE_PRESENT(pte) (pte&PAGING_PTE_PRESENT_MASK)
+#define PAGING_PTE_SET_PRESENT(pte) (pte=pte|PAGING_PTE_PRESENT_MASK) /* Set present bit to 1 */
+#define PAGING_PAGE_PRESENT(pte) (pte&PAGING_PTE_PRESENT_MASK) /* Extract present bit */
 
 /* USRNUM */
 #define PAGING_PTE_USRNUM_LOBIT 15
@@ -39,37 +39,37 @@
 #define PAGING_PTE_SWPOFF_LOBIT 5
 #define PAGING_PTE_SWPOFF_HIBIT 25
 
-
+/* Mask. Return a binary, which has bits in range [hi,low] is 1, the others is 0*/
 #define PAGING_PTE_USRNUM_MASK GENMASK(PAGING_PTE_USRNUM_HIBIT,PAGING_PTE_USRNUM_LOBIT)
 #define PAGING_PTE_FPN_MASK    GENMASK(PAGING_PTE_FPN_HIBIT,PAGING_PTE_FPN_LOBIT)
 #define PAGING_PTE_SWPTYP_MASK GENMASK(PAGING_PTE_SWPTYP_HIBIT,PAGING_PTE_SWPTYP_LOBIT)
 #define PAGING_PTE_SWPOFF_MASK GENMASK(PAGING_PTE_SWPOFF_HIBIT,PAGING_PTE_SWPOFF_LOBIT)
 
 /* OFFSET */
-#define PAGING_ADDR_OFFST_LOBIT 0
-#define PAGING_ADDR_OFFST_HIBIT (NBITS(PAGING_PAGESZ) - 1)
+#define PAGING_ADDR_OFFST_LOBIT 0 /*lowerbound of page offset (in CPU address)*/
+#define PAGING_ADDR_OFFST_HIBIT (NBITS(PAGING_PAGESZ) - 1) /*upperbound of page offset (in CPU address)*/
 
 /* PAGE Num */
-#define PAGING_ADDR_PGN_LOBIT NBITS(PAGING_PAGESZ)
-#define PAGING_ADDR_PGN_HIBIT (PAGING_CPU_BUS_WIDTH - 1)
+#define PAGING_ADDR_PGN_LOBIT NBITS(PAGING_PAGESZ) /*lowerbound of page num (in CPU address)*/
+#define PAGING_ADDR_PGN_HIBIT (PAGING_CPU_BUS_WIDTH - 1) /* upperbound of page num (in CPU address) */
 
 /* Frame PHY Num */
-#define PAGING_ADDR_FPN_LOBIT NBITS(PAGING_PAGESZ)
-#define PAGING_ADDR_FPN_HIBIT (NBITS(PAGING_MEMRAMSZ) - 1)
+#define PAGING_ADDR_FPN_LOBIT NBITS(PAGING_PAGESZ)/* The lowerbound of frame id in frame swap offset (?)*/
+#define PAGING_ADDR_FPN_HIBIT (NBITS(PAGING_MEMRAMSZ) - 1) /* The upperbound of frame id in frame swap offset (?)*/
 
 /* SWAPFPN */
-#define PAGING_SWP_LOBIT NBITS(PAGING_PAGESZ)
-#define PAGING_SWP_HIBIT (NBITS(PAGING_MEMSWPSZ) - 1)
-#define PAGING_SWP(pte) ((pte&PAGING_SWP_MASK) >> PAGING_SWPFPN_OFFSET)
+#define PAGING_SWP_LOBIT NBITS(PAGING_PAGESZ) /* The lowerbound of frame id in frame swap offset (?)*/
+#define PAGING_SWP_HIBIT (NBITS(PAGING_MEMSWPSZ) - 1) /* The upperbound of frame id in frame swap offset (?)*/
+#define PAGING_SWP(pte) ((pte&PAGING_PTE_SWPOFF_MASK) >> PAGING_SWPFPN_OFFSET) /* Original: extract bit 8 to 13; however, after changes, extract bit 5 - 25 (change PAGING_SWP_MASK to PAGING_PTE_SWPOFF_MASK)*/
 
 /* Value operators */
-#define SETBIT(v,mask) (v=v|mask)
-#define CLRBIT(v,mask) (v=v&~mask)
+#define SETBIT(v,mask) (v=v|mask) /* Set bits in range [hi, low] of mask to 1 */
+#define CLRBIT(v,mask) (v=v&~mask) /* Set bits in range [hi, low] of mask to 0 */
 
-#define SETVAL(v,value,mask,offst) (v=(v&~mask)|((value<<offst)&mask))
-#define GETVAL(v,mask,offst) ((v&mask)>>offst)
+#define SETVAL(v,value,mask,offst) (v=(v&~mask)|((value<<offst)&mask)) /* Set the value in range [hi, low] of mask to that of value */
+#define GETVAL(v,mask,offst) ((v&mask)>>offst) /* Get the value in range [hi, low] of mask, then shift left offst bits (for discarding those bits)*/
 
-/* Masks */
+/* Masks */ /* Return a binary, which has bits in range [hi,low] is 1, the others is 0*/
 #define PAGING_OFFST_MASK  GENMASK(PAGING_ADDR_OFFST_HIBIT,PAGING_ADDR_OFFST_LOBIT)
 #define PAGING_PGN_MASK  GENMASK(PAGING_ADDR_PGN_HIBIT,PAGING_ADDR_PGN_LOBIT)
 #define PAGING_FPN_MASK  GENMASK(PAGING_ADDR_FPN_HIBIT,PAGING_ADDR_FPN_LOBIT)
