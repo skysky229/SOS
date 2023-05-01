@@ -108,7 +108,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
     fpit = fpit->fp_next;
     if(fpit == NULL)
     {
-      cout << "fpit in mm.c is NULL" << endl;
+      //cout << "fpit in mm.c is NULL" << endl;
       return -1;
     }
     int fpn = fpit->fpn;
