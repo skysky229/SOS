@@ -139,18 +139,18 @@ int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 
 int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
 {
-   struct framephy_struct *fp = mp->free_fp_list;
+   struct framephy_struct *fp = mp->free_fp_list; // get ffl
 
    if (fp == NULL)
-     return -1;
+     return -1; // Out of free frames
 
-   *retfpn = fp->fpn;
-   mp->free_fp_list = fp->fp_next;
+   *retfpn = fp->fpn; // return frame page number
+   mp->free_fp_list = fp->fp_next; // change head of ffl
 
    /* MEMPHY is iteratively used up until its exhausted
     * No garbage collector acting then it not been released
     */
-   free(fp);
+   free(fp); // free frame from ffl
 
    return 0;
 }
