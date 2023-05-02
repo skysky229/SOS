@@ -207,12 +207,15 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     /* Get free frame in MEMSWP */
     MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
 
-
+    // CHANGE
+    if(vicpgn == -1 || swpfpn == -1) return -1;
+    uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
+    int vicfpn = PAGING_FPN(pte_vicpgn);
     /* Do swap frame from MEMRAM to MEMSWP and vice versa*/
     /* Copy victim frame to swap */
-    __swap_cp_page(caller->mram, vicpgn, caller->active_mswp, swpfpn);
+    __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
     /* Copy target frame from swap to mem */
-    __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicpgn);
+    __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicfpn);
 
     /* Update page table */
     pte_set_swap(&mm->pgd[vicpgn], swpfpn, 0); /* Set the pte of victim page to swpfpn (which means it is stored in frame swpfpn) */
@@ -489,6 +492,7 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
   /* TODO: Implement the theorical mechanism to find the victim page */
   while(pg->pg_next != NULL){
     pg = pg->pg_next;
+    // WIP: change previous node "next" value to NULL
   }
 
   *retpgn = pg->pgn;

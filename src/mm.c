@@ -117,7 +117,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
     // set frame page number bits (from 0 to 12 --> 13 bits)
     caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff); 
     caller->mm->pgd[pageNum] |= 1 << 31; // set present bit to 1
-    enlist_pgn_node(&caller->mm->fifo_pgn, pageNum + pgit);
+    enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
   }
   ret_rg->rg_end = addr + pgnum * PAGING_PAGESZ;
   //pte_set_fpn(caller->mm->pgd[pageNum], fpn);
@@ -170,6 +170,22 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
     else 
     {  // ERROR CODE of obtaining somes but not enough frames
       //printf("End alloc_pages_range with return = -3000.\n\n");
+
+      // Page replacement for alloc if there out of free frames from RAM
+      // WIP
+      
+      /*int vicpgn = -1, swpfpn = -1;
+      int status = find_victim_page(caller->mm, &vicpgn);
+      status += MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
+      if(status == 0)
+      {
+        uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
+        int vicfpn = PAGING_FPN(pte_vicpgn);
+        __swap_cp_page(caller->mram, vicpgn, caller->active_mswp, swpfpn);
+
+      }
+      else return -1;*/
+
       return -3000; //if out of memory (frames)
     } 
   }
@@ -181,9 +197,9 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
 /* 
  * vm_map_ram - do the mapping all vm are to ram storage device
  * @caller    : caller
- * @astart    : vm area start
- * @aend      : vm area end
- * @mapstart  : start mapping point
+ * @astart    : vm area start ==> vm_region start
+ * @aend      : vm area end ==> vm_region end
+ * @mapstart  : start mapping point ==> vm_area end
  * @incpgnum  : number of mapped page
  * @ret_rg    : returned region
  */
