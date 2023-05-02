@@ -149,10 +149,10 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   rgnode->rg_next = NULL;
   
   /*enlist the obsoleted memory region */
-  printf("Freed region id: %d\n", rgid);
+  //printf("Freed region id: %d\n", rgid);
   enlist_vm_freerg_list(caller->mm, rgnode);
-  print_list_rg(caller->mm->mmap->vm_freerg_list);
-  printf("End __free.\n");
+  //print_list_rg(caller->mm->mmap->vm_freerg_list);
+  //printf("End __free.\n");
   return 0;
 }
 
@@ -527,7 +527,7 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
       //printf("BP: region has enough space - get_free_vmrg_area.\n");
       //printf("BP: rgit->rg_start = %ld - get_free_vmrg_area.\n", rgit->rg_start);
       //printf("BP: rgit->end = %ld - get_free_vmrg_area.\n", rgit->rg_end);
-      sleep(1);
+      //sleep(1);
       // BUG!!
       newrg->rg_start = rgit->rg_start;
       newrg->rg_end = rgit->rg_start + size;
@@ -561,7 +561,7 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
     }
     else
     {
-      printf("BP: region doesn't have enough space - get_free_vmrg_area.\n");
+      //printf("BP: region doesn't have enough space - get_free_vmrg_area.\n");
       //printf("BP: rgit->rg_start = %ld - get_free_vmrg_area.\n", rgit->rg_start);
       //printf("BP: rgit->end = %ld - get_free_vmrg_area.\n", rgit->rg_end);
       rgit = rgit->rg_next;	// Traverse next rg
