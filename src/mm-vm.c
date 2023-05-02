@@ -403,10 +403,12 @@ struct vm_rg_struct* get_vm_area_node_at_brk(struct pcb_t *caller, int vmaid, in
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
 
   newrg = malloc(sizeof(struct vm_rg_struct));
-
+printf("BP: cur_vma->sbrk = %ld - get_vm_area_node_at_brk.\n", cur_vma->sbrk);
   newrg->rg_start = cur_vma->sbrk;
   newrg->rg_end = newrg->rg_start + size;
 
+  printf("BP: newrg->rg_start = %ld - get_vm_area_node_at_brk.\n", newrg->rg_start);
+  printf("BP: newrg->rg_end = %ld - get_vm_area_node_at_brk.\n", newrg->rg_end);
   return newrg;
 }
 
@@ -448,9 +450,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   int incnumpage =  inc_amt / PAGING_PAGESZ; // number of increased page(s)
   
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
-  cur_vma->sbrk += inc_sz;
   struct vm_rg_struct *area = get_vm_area_node_at_brk(caller, vmaid, inc_sz, inc_amt);
-  
 
   int old_end = cur_vma->vm_end;
 
@@ -465,6 +465,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   /* The obtained vm area (only) 
    * now will be alloc real ram region */
   cur_vma->vm_end += inc_sz;
+  cur_vma->sbrk += inc_sz;
   if (vm_map_ram(caller, area->rg_start, area->rg_end, 
                     old_end, incnumpage , newrg) < 0)
     return -1; /* Map the memory to MEMRAM */
@@ -560,7 +561,9 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
     }
     else
     {
-      //printf("BP: region doesn't have enough space - get_free_vmrg_area.\n");
+      printf("BP: region doesn't have enough space - get_free_vmrg_area.\n");
+      //printf("BP: rgit->rg_start = %ld - get_free_vmrg_area.\n", rgit->rg_start);
+      //printf("BP: rgit->end = %ld - get_free_vmrg_area.\n", rgit->rg_end);
       rgit = rgit->rg_next;	// Traverse next rg
     }
   }

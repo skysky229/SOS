@@ -108,6 +108,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
     int pageNum = PAGING_PGN(pageAddr); // does it work like this?
     fpit = fpit->fp_next;
     if(fpit == NULL)
+    //printf("frames numb: %d - vmap_page_range: ", fpn);
     {
       printf("fpit in mm.c is NULL \n");
       return -1;
@@ -119,7 +120,10 @@ int vmap_page_range(struct pcb_t *caller, // process call
     enlist_pgn_node(&caller->mm->fifo_pgn, pageNum + pgit);
   }
   ret_rg->rg_end = addr + pgnum * PAGING_PAGESZ;
-  //printf("BP: ret_rg->rg_start = %ld - vmap_page_range\n", ret_rg->rg_start);
+  //pte_set_fpn(caller->mm->pgd[pageNum], fpn);
+    printf("page addr: %d - vmap_page_range \n", pageAddr);
+    printf("frame test: %d \n", GETVAL(caller->mm->pgd[pageNum], PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT));
+    enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
   //printf("BP: ret_rg->rg_end = %ld - vmap_page_range\n", ret_rg->rg_end);
   //printf("BP: ret_rg->rg_start = %ld - vmap_page_range\n", caller->mm->symrgtbl[rgid].rg_start);
   //printf("BP: ret_rg->rg_end = %ld - vmap_page_range\n", caller->mm->symrgtbl[rgid].rg_end);
