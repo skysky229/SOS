@@ -121,9 +121,9 @@ int vmap_page_range(struct pcb_t *caller, // process call
   }
   ret_rg->rg_end = addr + pgnum * PAGING_PAGESZ;
   //pte_set_fpn(caller->mm->pgd[pageNum], fpn);
-    printf("page addr: %d - vmap_page_range \n", pageAddr);
-    printf("frame test: %d \n", GETVAL(caller->mm->pgd[pageNum], PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT));
-    enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
+  //printf("page addr: %d - vmap_page_range \n", pageAddr);
+  //printf("frame test: %d \n", GETVAL(caller->mm->pgd[pageNum], PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT));
+  //enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
   //printf("BP: ret_rg->rg_end = %ld - vmap_page_range\n", ret_rg->rg_end);
   //printf("BP: ret_rg->rg_start = %ld - vmap_page_range\n", caller->mm->symrgtbl[rgid].rg_start);
   //printf("BP: ret_rg->rg_end = %ld - vmap_page_range\n", caller->mm->symrgtbl[rgid].rg_end);
