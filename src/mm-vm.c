@@ -250,8 +250,7 @@ int pg_getval(struct mm_struct *mm, int addr, BYTE *data, struct pcb_t *caller)
 
   int phyaddr = (fpn << PAGING_ADDR_FPN_LOBIT) + off; /* Shift left by a number of bits equal to size of a frame (for offset)*/
 
-  MEMPHY_read(caller->mram,phyaddr, data);
-
+  MEMPHY_read(caller->mram, phyaddr, data);
   return 0;
 }
 
@@ -309,7 +308,7 @@ int pgread(
 		uint32_t destination) 
 {
   BYTE data;
-  int val = __read(proc, 0, source, offset, &data);
+  __read(proc, 0, source, offset, &data);
 
   destination = (uint32_t) data;
 #ifdef IODUMP
@@ -320,7 +319,7 @@ int pgread(
   MEMPHY_dump(proc->mram);
 #endif
 
-  return val;
+  return 0;
 }
 
 /*__write - write a region memory
@@ -486,15 +485,21 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
 int find_victim_page(struct mm_struct *mm, int *retpgn) 
 {
   struct pgn_t *pg = mm->fifo_pgn;
-
+  struct pgn_t *prev_pg = NULL;
   if (pg == NULL) return -1; /* There is no pages in fifo */
   /* Apply FIFO for find victim page */
   /* TODO: Implement the theorical mechanism to find the victim page */
+  
   while(pg->pg_next != NULL){
+    prev_pg = pg;
     pg = pg->pg_next;
     // WIP: change previous node "next" value to NULL
   }
+  /* Update the tail of fifo_pgn list */
+  if (prev_pg != NULL)
+    prev_pg->pg_next = NULL; 
 
+  /* The returned page */
   *retpgn = pg->pgn;
   free(pg);
 

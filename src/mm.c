@@ -151,21 +151,12 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
 
   for(pgit = 0; pgit < req_pgnum; pgit++)
   {
+    struct framephy_struct* temp = malloc(sizeof(struct framephy_struct));
     if(MEMPHY_get_freefp(caller->mram, &fpn) == 0)
     {
       // If there is free frame available
       // TODO: create new frame --> append to frm_lst --> add fpn
-      struct framephy_struct* temp = malloc(sizeof(struct framephy_struct));
       temp->fpn = fpn;
-      if(*frm_lst == NULL)
-      {
-        *frm_lst = temp;
-      }
-      else
-      {
-        temp->fp_next = *frm_lst;
-        *frm_lst = temp;
-      }
     } 
     else 
     {  // ERROR CODE of obtaining somes but not enough frames
@@ -174,20 +165,26 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       // Page replacement for alloc if there out of free frames from RAM
       // WIP
       
-      /*int vicpgn = -1, swpfpn = -1;
-      int status = find_victim_page(caller->mm, &vicpgn);
-      status += MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
-      if(status == 0)
+      int vicpgn = -1, swpfpn = -1;
+      find_victim_page(caller->mm, &vicpgn);
+      MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
+      if(swpfpn != -1) /* A frame in swap is available */
       {
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
         int vicfpn = PAGING_FPN(pte_vicpgn);
-        __swap_cp_page(caller->mram, vicpgn, caller->active_mswp, swpfpn);
-
+        __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
+        fpn = vicfpn;
       }
-      else return -1;*/
+      else return -3000; //if out of memory (frames)
+    }
 
-      return -3000; //if out of memory (frames)
-    } 
+    /* Enlist to free frame list */
+    if(*frm_lst == NULL){
+      *frm_lst = temp;
+    } else {
+      temp->fp_next = *frm_lst;
+      *frm_lst = temp;
+    }
   }
   //printf("End alloc_pages_range.\n");
   return 0;
