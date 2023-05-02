@@ -403,12 +403,12 @@ struct vm_rg_struct* get_vm_area_node_at_brk(struct pcb_t *caller, int vmaid, in
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
 
   newrg = malloc(sizeof(struct vm_rg_struct));
-printf("BP: cur_vma->sbrk = %ld - get_vm_area_node_at_brk.\n", cur_vma->sbrk);
+  //printf("BP: cur_vma->sbrk = %ld - get_vm_area_node_at_brk.\n", cur_vma->sbrk);
   newrg->rg_start = cur_vma->sbrk;
   newrg->rg_end = newrg->rg_start + size;
 
-  printf("BP: newrg->rg_start = %ld - get_vm_area_node_at_brk.\n", newrg->rg_start);
-  printf("BP: newrg->rg_end = %ld - get_vm_area_node_at_brk.\n", newrg->rg_end);
+  //printf("BP: newrg->rg_start = %ld - get_vm_area_node_at_brk.\n", newrg->rg_start);
+  //printf("BP: newrg->rg_end = %ld - get_vm_area_node_at_brk.\n", newrg->rg_end);
   return newrg;
 }
 
