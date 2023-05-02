@@ -85,10 +85,12 @@ int vmap_page_range(struct pcb_t *caller, // process call
            struct framephy_struct *frames,// list of the mapped frames (free frames)
               struct vm_rg_struct *ret_rg)// return mapped region, the real mapped fp
 {                                         // no guarantee all given pages are mapped
-  //uint32_t * pte = malloc(sizeof(uint32_t));
+  // uint32_t * pte = malloc(sizeof(uint32_t));
   printf("Begin vmap_page_range.\n");
   struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
   //int  fpn;
+  printf("frames test - vmap_page_range: ");
+  print_list_fp(frames);
   int pgit = 0;
   // int pgn = PAGING_PGN(addr); // DON'T CARE ABOUT THIS FUNCTION 
                               // --> KNOWS THAT IT CREATES PAGE NUMBER OUT OF ADDRESS GIVEN
@@ -102,10 +104,11 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
-  for(; pgit < pgnum; pgit++)
+  for(pgit=0;pgit<pgnum;pgit++)
   {
     int pageAddr = addr + pgit * PAGING_PAGESZ;
     int pageNum = PAGING_PGN(pageAddr); // does it work like this?
+    //printf("frames numb: %d - vmap_page_range: ", fpn);
     fpit = fpit->fp_next;
     if(fpit == NULL)
     {
@@ -116,7 +119,10 @@ int vmap_page_range(struct pcb_t *caller, // process call
     // set frame page number bits (from 0 to 12 --> 13 bits)
     caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff); 
     caller->mm->pgd[pageNum] |= 1 << 31; // set present bit to 1
-    enlist_pgn_node(&caller->mm->fifo_pgn, pageNum + pgit);
+    //pte_set_fpn(caller->mm->pgd[pageNum], fpn);
+    printf("page addr: %d - vmap_page_range \n", pageAddr);
+    printf("frame test: %d \n", GETVAL(caller->mm->pgd[pageNum], PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT));
+    enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
   }
   ret_rg->rg_end = addr + pgnum * PAGING_PAGESZ;
   printf("BP: ret_rg->rg_start = %ld - vmap_page_range\n", ret_rg->rg_start);
@@ -302,7 +308,8 @@ int enlist_pgn_node(struct pgn_t **plist, int pgn)
   pnode->pgn = pgn;
   pnode->pg_next = *plist;
   *plist = pnode;
-
+  printf("fifo_pgn after enlisting: \n");
+  print_list_pgn(*plist);
   printf("End enlist_pgn_node.\n");
   return 0;
 }
@@ -393,6 +400,16 @@ int print_pgtbl(struct pcb_t *caller, uint32_t start, uint32_t end)
   }
 
   return 0;
+}
+
+int print_symtbl(struct vm_rg_struct rg[])
+{ 
+   printf("print_list_rg: ");
+   printf("\n");
+   for(int i=0;i<10;i++)
+       printf("rg[%ld->%ld]\n",rg[i].rg_start, rg[i].rg_end);
+   printf("\n");
+   return 0;
 }
 
 //#endif

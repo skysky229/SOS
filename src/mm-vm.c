@@ -114,7 +114,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   inc_vma_limit(caller, vmaid, inc_sz);
 
   /*Successful increase limit */
-  printf("BP: Region ID: %i - __alloc", rgid);
+  printf("BP: Region ID: %i - __alloc \n", rgid);
   caller->mm->symrgtbl[rgid].rg_start = old_sbrk;
   caller->mm->symrgtbl[rgid].rg_end = old_sbrk + size;
 
@@ -122,6 +122,8 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   //struct vm_rg_struct *ret_rg = NULL;
   //vmap_page_range(caller, old_sbrk, inc_sz / PAGING_PAGESZ, idk, ret_rg);
 
+  printf("Symbltbl: \n");
+  print_symtbl(caller->mm->symrgtbl);
   printf("End __alloc.\n");
   return 0;
 }
@@ -145,7 +147,8 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   /* TODO: Manage the collect freed region to freerg_list */
   rgnode = *(get_symrg_byid(caller->mm, rgid));
   //rgnode = caller->mm->symrgtbl[rgid];
-  
+  printf("BP: rgnode->rg_start = %ld - __free\n", rgnode.rg_start);
+  printf("BP: rgnode->rg_end = %ld - __free\n", rgnode.rg_end);
   /*enlist the obsoleted memory region */
   printf("Freed region id: %d\n", rgid);
   enlist_vm_freerg_list(caller->mm, rgnode);
@@ -401,10 +404,12 @@ struct vm_rg_struct* get_vm_area_node_at_brk(struct pcb_t *caller, int vmaid, in
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
 
   newrg = malloc(sizeof(struct vm_rg_struct));
-
+printf("BP: cur_vma->sbrk = %ld - get_vm_area_node_at_brk.\n", cur_vma->sbrk);
   newrg->rg_start = cur_vma->sbrk;
   newrg->rg_end = newrg->rg_start + size;
 
+  printf("BP: newrg->rg_start = %ld - get_vm_area_node_at_brk.\n", newrg->rg_start);
+  printf("BP: newrg->rg_end = %ld - get_vm_area_node_at_brk.\n", newrg->rg_end);
   return newrg;
 }
 
@@ -446,9 +451,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   int incnumpage =  inc_amt / PAGING_PAGESZ; // number of increased page(s)
   
   struct vm_area_struct *cur_vma = get_vma_by_num(caller->mm, vmaid);
-  cur_vma->sbrk += inc_sz;
   struct vm_rg_struct *area = get_vm_area_node_at_brk(caller, vmaid, inc_sz, inc_amt);
-  
 
   int old_end = cur_vma->vm_end;
 
@@ -463,6 +466,7 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
   /* The obtained vm area (only) 
    * now will be alloc real ram region */
   cur_vma->vm_end += inc_sz;
+  cur_vma->sbrk += inc_sz;
   if (vm_map_ram(caller, area->rg_start, area->rg_end, 
                     old_end, incnumpage , newrg) < 0)
     return -1; /* Map the memory to MEMRAM */
@@ -524,7 +528,6 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
       //printf("BP: region has enough space - get_free_vmrg_area.\n");
       printf("BP: rgit->rg_start = %ld - get_free_vmrg_area.\n", rgit->rg_start);
       printf("BP: rgit->end = %ld - get_free_vmrg_area.\n", rgit->rg_end);
-      sleep(1);
       // BUG!!
       newrg->rg_start = rgit->rg_start;
       newrg->rg_end = rgit->rg_start + size;
@@ -559,14 +562,16 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
     else
     {
       printf("BP: region doesn't have enough space - get_free_vmrg_area.\n");
+      printf("BP: rgit->rg_start = %ld - get_free_vmrg_area.\n", rgit->rg_start);
+      printf("BP: rgit->end = %ld - get_free_vmrg_area.\n", rgit->rg_end);
       rgit = rgit->rg_next;	// Traverse next rg
     }
   }
 
   if(newrg->rg_start == -1) // new region not found
   {
-    return -1;
     printf("End get_free_vmrg_area with return = -1.\n");
+    return -1;
   }
 
   printf("End get_free_vmrg_area.\n");
