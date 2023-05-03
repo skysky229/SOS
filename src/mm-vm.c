@@ -123,6 +123,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
   //vmap_page_range(caller, old_sbrk, inc_sz / PAGING_PAGESZ, idk, ret_rg);
 
   //printf("End __alloc.\n");
+  printf("Alloc success, PID: %d \n", caller->pid);
   return 0;
 }
 
@@ -153,6 +154,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   enlist_vm_freerg_list(caller->mm, rgnode);
   //print_list_rg(caller->mm->mmap->vm_freerg_list);
   //printf("End __free.\n");
+  printf("Free success, PID: %d \n", caller->pid);
   return 0;
 }
 
@@ -166,6 +168,13 @@ int pgalloc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
   int addr;
 
   /* By default using vmaid = 0 */
+  #ifdef IODUMP
+  printf("alloc size=%d register index=%d PID=%d \n", size, reg_index, proc->pid);
+  #ifdef PAGETBL_DUMP
+  print_pgtbl(proc, 0, -1); //print max TBL
+  #endif
+  MEMPHY_dump(proc->mram);
+  #endif
   return __alloc(proc, 0, reg_index, size, &addr);
 }
 
@@ -177,6 +186,13 @@ int pgalloc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 
 int pgfree_data(struct pcb_t *proc, uint32_t reg_index)
 {
+  #ifdef IODUMP
+  printf("register index=%d PID: %d\n", reg_index, proc->pid);
+  #ifdef PAGETBL_DUMP
+  print_pgtbl(proc, 0, -1); //print max TBL
+  #endif
+  MEMPHY_dump(proc->mram);
+  #endif
    return __free(proc, 0, reg_index);
 }
 
@@ -273,8 +289,7 @@ int pg_setval(struct mm_struct *mm, int addr, BYTE value, struct pcb_t *caller)
   int phyaddr = (fpn << PAGING_ADDR_FPN_LOBIT) + off;
 
   MEMPHY_write(caller->mram,phyaddr, value);
-
-   return 0;
+  return 0;
 }
 
 /*__read - read value in region memory
@@ -295,7 +310,7 @@ int __read(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE *data)
 	  return -1;
 
   pg_getval(caller->mm, currg->rg_start + offset, data, caller);
-
+  printf("Read success, PID: %d \n", caller->pid);
   return 0;
 }
 
@@ -340,7 +355,7 @@ int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 	  return -1;
 
   pg_setval(caller->mm, currg->rg_start + offset, value, caller);
-
+  printf("Write success, PID: %d \n", caller->pid);
   return 0;
 }
 
