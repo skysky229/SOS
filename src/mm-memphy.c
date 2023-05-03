@@ -73,14 +73,26 @@ int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value)
  */
 int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
 {
+   if (!mutex_initialized) {
+      mutex_init();
+   }
+
+   pthread_mutex_lock(&mutex);
    if (mp == NULL)
-     return -1;
+   {
+      pthread_mutex_unlock(&mutex);
+      return -1;
+   }
 
    if (mp->rdmflg)
       *value = mp->storage[addr];
    else /* Sequential access device */
+   {
+      pthread_mutex_unlock(&mutex);
       return MEMPHY_seq_read(mp, addr, value);
+   }
 
+   pthread_mutex_unlock(&mutex);
    return 0;
 }
 
@@ -118,9 +130,9 @@ int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
    }
    
    pthread_mutex_lock(&mutex);
-   printf("Mutex lock is locked in MEMPHY_write \n");
+   //printf("Mutex lock is locked in MEMPHY_write \n");
    if (mp == NULL){
-      printf("Mutex lock is unlocked in MEMPHY_write \n");
+      //printf("Mutex lock is unlocked in MEMPHY_write \n");
       pthread_mutex_unlock(&mutex);
       return -1;
    }
@@ -129,7 +141,7 @@ int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
       mp->storage[addr] = data;
    else /* Sequential access device */
       return MEMPHY_seq_write(mp, addr, data);
-   printf("Mutex lock is unlocked in MEMPHY_write \n");
+   //printf("Mutex lock is unlocked in MEMPHY_write \n");
    pthread_mutex_unlock(&mutex);
    return 0;
 }
@@ -181,11 +193,11 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
    }
    
    pthread_mutex_lock(&mutex);
-   printf("Mutex lock is locked in MEMPHY_get_freefp \n");
+   //printf("Mutex lock is locked in MEMPHY_get_freefp \n");
    struct framephy_struct *fp = mp->free_fp_list; // get ffl
 
    if (fp == NULL){
-      printf("Mutex lock is unlocked in MEMPHY_get_freefp due to out of free frames \n");
+      //printf("Mutex lock is unlocked in MEMPHY_get_freefp due to out of free frames \n");
       pthread_mutex_unlock(&mutex);
       return -1; // Out of free frames
 
@@ -198,7 +210,7 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
     * No garbage collector acting then it not been released
     */
    free(fp); // free frame from ffl
-   printf("Mutex lock is unlocked in MEMPHY_get_freefp \n");
+   //printf("Mutex lock is unlocked in MEMPHY_get_freefp \n");
    pthread_mutex_unlock(&mutex);
    return 0;
 }

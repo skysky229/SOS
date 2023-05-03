@@ -24,7 +24,13 @@
 
 /* PTE BIT PRESENT */
 #define PAGING_PTE_SET_PRESENT(pte) (pte=pte|PAGING_PTE_PRESENT_MASK) /* Set present bit to 1 */
+#define PAGING_PTE_UNSET_PRESENT(pte) (pte=pte&(~PAGING_PTE_PRESENT_MASK)) /* Set present bit to 0 */
 #define PAGING_PAGE_PRESENT(pte) (pte&PAGING_PTE_PRESENT_MASK) /* Extract present bit */
+
+/* PTE BIT SWAPPED */
+#define PAGING_PTE_SET_SWAPPED(pte) (pte=pte|PAGING_PTE_SWAPPED_MASK) /* Set swapped bit to 1 */
+#define PAGING_PTE_UNSET_SWAPPED(pte) (pte=pte&(~PAGING_PTE_SWAPPED_MASK)) /* Set swapped bit to 0 */
+#define PAGING_PAGE_SWAPPED(pte) (pte&PAGING_PTE_SWAPPED_MASK) /* Extract swapped bit */
 
 /* USRNUM */
 #define PAGING_PTE_USRNUM_LOBIT 15
