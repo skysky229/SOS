@@ -170,6 +170,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
       if(swpfpn != -1) /* A frame in swap is available */
       {
+        printf("swpfpn found: %d\n", swpfpn);
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
         int vicfpn = PAGING_FPN(pte_vicpgn);
         __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
@@ -250,6 +251,7 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
 int __swap_cp_page(struct memphy_struct *mpsrc, int srcfpn,
                 struct memphy_struct *mpdst, int dstfpn) 
 {
+    printf("Swap activated \n");
   int cellidx;
   int addrsrc,addrdst;
   for(cellidx = 0; cellidx < PAGING_PAGESZ; cellidx++)
@@ -258,10 +260,10 @@ int __swap_cp_page(struct memphy_struct *mpsrc, int srcfpn,
     addrdst = dstfpn * PAGING_PAGESZ + cellidx;
 
     BYTE data;
+    printf("addrsrc: %d, addrdst: %d \n", addrsrc, addrdst);
     MEMPHY_read(mpsrc, addrsrc, &data);
     MEMPHY_write(mpdst, addrdst, data);
   }
-
   return 0;
 }
 
