@@ -174,6 +174,12 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
         int vicfpn = PAGING_FPN(pte_vicpgn);
         __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
+        // change to 5-25 form
+        
+        // set present bit to 0
+        //caller->mm->pgd[vicpgn] = PAGING_PTE_UNSET_PRESENT(pte_vicpgn);
+        // set swapped bit to 1
+        caller->mm->pgd[vicpgn] = PAGING_PTE_SET_SWAPPED(pte_vicpgn);
         fpn = vicfpn;
       }
       else return -3000; //if out of memory (frames)

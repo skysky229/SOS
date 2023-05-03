@@ -56,13 +56,14 @@ struct pcb_t * get_mlq_proc(void) {
         if((!empty(&mlq_ready_queue[i]))&&slot[i]>0){
             slot[i]--;
             proc = dequeue(&mlq_ready_queue[i]);
-            break;
+			pthread_mutex_unlock(&queue_lock);
+			return proc;
         }
     }
 	//If there nothing to dequeue(out of slot / no proc) reset the slot
-    for(int i =0;i<MAX_PRIO;i++){
-        slot[i]=MAX_PRIO-i;
-    }
+	for(int i =0;i<MAX_PRIO;i++){
+		slot[i]=MAX_PRIO-i;
+	}
     pthread_mutex_unlock(&queue_lock);
 	return proc;	
 }
