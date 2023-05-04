@@ -51,11 +51,13 @@ int init_pte(uint32_t *pte,
  */
 int pte_set_swap(uint32_t *pte, int swptyp, int swpoff)
 {
-  SETBIT(*pte, PAGING_PTE_PRESENT_MASK);
+  CLRBIT(*pte, PAGING_PTE_PRESENT_MASK);
   SETBIT(*pte, PAGING_PTE_SWAPPED_MASK);
-
+  //printf("In pte_set_swap: swptyp: %d, swpoff: %d, pte: %08x \n", swptyp, swpoff, *pte);
   SETVAL(*pte, swptyp, PAGING_PTE_SWPTYP_MASK, PAGING_PTE_SWPTYP_LOBIT);
+  //printf("In pte_set_swap: After set swptyp: pte: %08x \n", *pte);
   SETVAL(*pte, swpoff, PAGING_PTE_SWPOFF_MASK, PAGING_PTE_SWPOFF_LOBIT);
+  //printf("In pte_set_swap: After set swpoff: pte: %08x \n", *pte);
 
   return 0;
 }
@@ -67,10 +69,12 @@ int pte_set_swap(uint32_t *pte, int swptyp, int swpoff)
  */
 int pte_set_fpn(uint32_t *pte, int fpn)
 {
+  //printf("Setfpn called for pte %08x\n", *pte);
   SETBIT(*pte, PAGING_PTE_PRESENT_MASK);
   CLRBIT(*pte, PAGING_PTE_SWAPPED_MASK);
-
+  //printf("Setfpn's pte after set bit %08x\n", *pte);
   SETVAL(*pte, fpn, PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT); 
+  //printf("Setfpn's pte final %08x\n", *pte);
 
   return 0;
 }
@@ -187,7 +191,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
         //printf("Victim frame number is: %i\n", vicpgn);
         __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
         // change to 5-25 form
-        pte_set_swap(&(caller->mm->pgd[vicpgn]), swpfpn, 0); // PRESENT AND SWAPPED ALL EQUALS 1?
+        pte_set_swap(&(caller->mm->pgd[vicpgn]), 0, swpfpn); // PRESENT AND SWAPPED ALL EQUALS 1?
         // set present bit to 0
         CLRBIT(caller->mm->pgd[vicpgn], PAGING_PTE_PRESENT_MASK);
         // set swapped bit to 1

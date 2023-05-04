@@ -235,11 +235,11 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicfpn);
 
     /* Update page table */
-    pte_set_swap(&mm->pgd[vicpgn], swpfpn, 0); /* Set the pte of victim page to swpfpn (which means it is stored in frame swpfpn) */
+    pte_set_swap(&mm->pgd[vicpgn], 0, swpfpn); /* Set the pte of victim page to swpfpn (which means it is stored in frame swpfpn) */
 
     /* Update its online status of the target page */
-    //pte_set_fpn() & mm->pgd[pgn];
-    pte_set_fpn(&pte, tgtfpn);
+    //pte_set_fpn() &mm->pgd[pgn];
+    pte_set_fpn(&mm->pgd[pgn], vicfpn);
 
     enlist_pgn_node(&caller->mm->fifo_pgn,pgn);
   }
