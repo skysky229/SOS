@@ -124,6 +124,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
 
   //printf("End __alloc.\n");
   printf("Alloc success, PID: %d \n", caller->pid);
+  print_pgtbl(caller, 0, -1);
   return 0;
 }
 
@@ -168,13 +169,13 @@ int pgalloc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
   int addr;
 
   /* By default using vmaid = 0 */
-  #ifdef IODUMP
+  /*#ifdef IODUMP
   printf("alloc size=%d register index=%d PID=%d \n", size, reg_index, proc->pid);
   #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); //print max TBL
   #endif
   MEMPHY_dump(proc->mram);
-  #endif
+  #endif*/
   return __alloc(proc, 0, reg_index, size, &addr);
 }
 
@@ -516,6 +517,7 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
 
   /* The returned page */
   *retpgn = pg->pgn;
+  //printf("Victim page number is: %i\n", pg->pgn);
   free(pg);
 
   return 0;

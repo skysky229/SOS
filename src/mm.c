@@ -102,10 +102,13 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
+  //printf("Number of mapping page of vm_page_range: %i\n", pgnum);
+  //printf("Current vm_end of vm_page_range: %i\n", addr);
   for(; pgit < pgnum; pgit++)
   {
     int pageAddr = addr + pgit * PAGING_PAGESZ;
-    int pageNum = PAGING_PGN(pageAddr); // does it work like this?
+    int pageNum = PAGING_PGN(pageAddr);
+    //printf("Page number of vm_page_range: %i\n", pageNum);
     fpit = fpit->fp_next;
     if(fpit == NULL)
     //printf("frames numb: %d - vmap_page_range: ", fpn);
@@ -114,9 +117,13 @@ int vmap_page_range(struct pcb_t *caller, // process call
       return -1;
     }
     int fpn = fpit->fpn;
+    printf("Frame page number: %i\n", fpn);
     // set frame page number bits (from 0 to 12 --> 13 bits)
-    caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff); 
-    caller->mm->pgd[pageNum] |= 1 << 31; // set present bit to 1
+
+    //caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff);
+    pte_set_fpn(&(caller->mm->pgd[pageNum]), fpn); //SETVAL(caller->mm->pgd[pageNum],fpn,PAGING_PTE_FPN_MASK,0);
+    //caller->mm->pgd[pageNum] = PAGING_PTE_SET_PRESENT(caller->mm->pgd[pageNum]); // set present bit to 1
+    //caller->mm->pgd[pageNum] = PAGING_PTE_UNSET_SWAPPED(caller->mm->pgd[pageNum]); // set swapped bit to 0
     enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
   }
   ret_rg->rg_end = addr + pgnum * PAGING_PAGESZ;
@@ -162,25 +169,31 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
     {  // ERROR CODE of obtaining somes but not enough frames
       //printf("End alloc_pages_range with return = -3000.\n\n");
 
-      // Page replacement for alloc if there out of free frames from RAM
+      // Page replacement for alloc if RAM is out of free frames
       // WIP
       
       int vicpgn = -1, swpfpn = -1;
       find_victim_page(caller->mm, &vicpgn);
+      //printf("Victim page number is: %i\n", vicpgn);
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
       if(swpfpn != -1) /* A frame in swap is available */
       {
-        printf("swpfpn found: %d\n", swpfpn);
+        //printf("swpfpn found: %d\n", swpfpn);
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
-        int vicfpn = PAGING_FPN(pte_vicpgn);
+        //printf("Page %i: ", vicpgn);
+        //printf("pte for victim page: %x\n", pte_vicpgn);
+        //int vicfpn = PAGING_FPN(pte_vicpgn); // WRONG!!
+        int vicfpn = GETVAL(pte_vicpgn,PAGING_PTE_FPN_MASK,PAGING_PTE_FPN_LOBIT);
+        //printf("Victim frame number is: %i\n", vicpgn);
         __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
         // change to 5-25 form
-        
+        pte_set_swap(&(caller->mm->pgd[vicpgn]), swpfpn, 0); // PRESENT AND SWAPPED ALL EQUALS 1?
         // set present bit to 0
-        //caller->mm->pgd[vicpgn] = PAGING_PTE_UNSET_PRESENT(pte_vicpgn);
+        CLRBIT(caller->mm->pgd[vicpgn], PAGING_PTE_PRESENT_MASK);
         // set swapped bit to 1
-        caller->mm->pgd[vicpgn] = PAGING_PTE_SET_SWAPPED(pte_vicpgn);
-        fpn = vicfpn;
+        //caller->mm->pgd[vicpgn] = PAGING_PTE_SET_SWAPPED(caller->mm->pgd[vicpgn]);
+        temp->fpn = vicfpn;
+        //printf("Victim Frame Page Number: %i\n", vicfpn);
       }
       else return -3000; //if out of memory (frames)
     }
@@ -194,6 +207,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
     }
   }
   //printf("End alloc_pages_range.\n");
+  //print_list_fp(*frm_lst);
   return 0;
 }
 
@@ -266,7 +280,7 @@ int __swap_cp_page(struct memphy_struct *mpsrc, int srcfpn,
     addrdst = dstfpn * PAGING_PAGESZ + cellidx;
 
     BYTE data;
-    printf("addrsrc: %d, addrdst: %d \n", addrsrc, addrdst);
+    //printf("addrsrc: %d, addrdst: %d \n", addrsrc, addrdst);
     MEMPHY_read(mpsrc, addrsrc, &data);
     MEMPHY_write(mpdst, addrdst, data);
   }
@@ -414,7 +428,8 @@ int print_pgtbl(struct pcb_t *caller, uint32_t start, uint32_t end)
 
   for(pgit = pgn_start; pgit < pgn_end; pgit++)
   {
-     printf("%08ld: %08x\n", pgit * sizeof(uint32_t), caller->mm->pgd[pgit]);
+     //printf("%08ld: %08x\n", pgit * sizeof(uint32_t), caller->mm->pgd[pgit]);
+    printf("PTE %i: %08x\n", pgit, caller->mm->pgd[pgit]);
   }
 
   return 0;
