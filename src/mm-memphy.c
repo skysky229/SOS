@@ -205,6 +205,7 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
 
    *retfpn = fp->fpn; // return frame page number
    mp->free_fp_list = fp->fp_next; // change head of ffl
+   //printf("Returned free frame: %d \n", *retfpn);
 
    /* MEMPHY is iteratively used up until its exhausted
     * No garbage collector acting then it not been released

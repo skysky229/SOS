@@ -1,6 +1,6 @@
 1 2
-alloc 600 0
-alloc 1000 4
+alloc 1000 0
+alloc 500 4
 free 0
 alloc 100 1
 write 100 1 20
