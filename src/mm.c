@@ -191,11 +191,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
         //printf("Victim frame number is: %i\n", vicpgn);
         __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
         // change to 5-25 form
-        pte_set_swap(&(caller->mm->pgd[vicpgn]), 0, swpfpn); // PRESENT AND SWAPPED ALL EQUALS 1?
-        // set present bit to 0
-        CLRBIT(caller->mm->pgd[vicpgn], PAGING_PTE_PRESENT_MASK);
-        // set swapped bit to 1
-        //caller->mm->pgd[vicpgn] = PAGING_PTE_SET_SWAPPED(caller->mm->pgd[vicpgn]);
+        pte_set_swap(&(caller->mm->pgd[vicpgn]), 0, swpfpn);
         temp->fpn = vicfpn;
         //printf("Victim Frame Page Number: %i\n", vicfpn);
       }
