@@ -206,6 +206,7 @@ int pgfree_data(struct pcb_t *proc, uint32_t reg_index)
  */
 int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
 {
+  //printf("Begin pg_getpage\n");
   uint32_t pte = mm->pgd[pgn]; /* Get the page table entry corresponding to the pgn page from the page table*/
 
   if (!PAGING_PAGE_PRESENT(pte)) // page is not in RAM (presented bit = 0)
@@ -227,7 +228,9 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     // CHANGE
     if(vicpgn == -1 || swpfpn == -1) return -1;
     uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
-    int vicfpn = PAGING_FPN(pte_vicpgn);
+    printf("victim pgn: %i\n", vicpgn);
+    //int vicfpn = PAGING_FPN(pte_vicpgn);
+    int vicfpn = GETVAL(pte_vicpgn,PAGING_PTE_FPN_MASK,PAGING_PTE_FPN_LOBIT);
     /* Do swap frame from MEMRAM to MEMSWP and vice versa*/
     /* Copy victim frame to swap */
     __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
@@ -248,7 +251,7 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
   }
 
   *fpn = PAGING_FPN(pte);
-
+  //printf("End pg_getpage\n");
   return 0;
 }
 
@@ -505,15 +508,28 @@ int inc_vma_limit(struct pcb_t *caller, int vmaid, int inc_sz)
  */
 int find_victim_page(struct mm_struct *mm, int *retpgn) 
 {
+  //printf("Begin find_victim_page\n");
   struct pgn_t *pg = mm->fifo_pgn;
   struct pgn_t *prev_pg = NULL;
   if (pg == NULL) return -1; /* There is no pages in fifo */
   /* Apply FIFO for find victim page */
   /* TODO: Implement the theorical mechanism to find the victim page */
+
+  // Only one victim page
+  if (pg->pg_next == NULL) {
+    *retpgn = pg->pgn;
+    mm->fifo_pgn = NULL;
+    free(pg);
+    //printf("End find_victim_page\n");
+    return 0;
+  }
   
   while(pg->pg_next != NULL){
     prev_pg = pg;
     pg = pg->pg_next;
+    //sleep(2);
+    //printf("BP find_victim_page\n");
+    //printf("Print page number: %i\n", pg->pgn);
     // WIP: change previous node "next" value to NULL
   }
   /* Update the tail of fifo_pgn list */
@@ -525,6 +541,7 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
   //printf("Victim page number is: %i\n", pg->pgn);
   free(pg);
 
+  //printf("End find_victim_page\n");
   return 0;
 }
 

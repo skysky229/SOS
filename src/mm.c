@@ -121,7 +121,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
       return -1;
     }
     int fpn = fpit->fpn;
-    printf("Frame page number: %i\n", fpn);
+    //printf("Frame page number: %i\n", fpn);
     // set frame page number bits (from 0 to 12 --> 13 bits)
 
     //caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff);
@@ -182,6 +182,7 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
       if(swpfpn != -1) /* A frame in swap is available */
       {
+        //printf("victim page number found: %i\n", vicpgn);
         //printf("swpfpn found: %d\n", swpfpn);
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
         //printf("Page %i: ", vicpgn);

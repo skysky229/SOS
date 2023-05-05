@@ -6,7 +6,7 @@
 /* CPU Bus definition */
 #define PAGING_CPU_BUS_WIDTH 22 /* 22bit bus - MAX SPACE 4MB */
 #define PAGING_PAGESZ  256      /* 256B or 8-bits PAGE NUMBER */
-#define PAGING_MEMRAMSZ BIT(1) /* 1MB */
+#define PAGING_MEMRAMSZ BIT(10) /* 1MB */
 #define PAGING_PAGE_ALIGNSZ(sz) (DIV_ROUND_UP(sz,PAGING_PAGESZ)*PAGING_PAGESZ)
 
 #define PAGING_MEMSWPSZ BIT(14) /* 16MB */
