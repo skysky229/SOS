@@ -1,8 +1,8 @@
-1 4
+1 3
 alloc 500 0
-alloc 100 4
+alloc 500 4
 write 100 0 20
-read 0 20 4
+read 0 300 4
 free 0
 alloc 100 1
 write 100 1 20
