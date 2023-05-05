@@ -234,6 +234,9 @@ int pg_getpage(struct mm_struct *mm, int pgn, int *fpn, struct pcb_t *caller)
     /* Copy target frame from swap to mem */
     __swap_cp_page(caller->active_mswp, tgtfpn, caller->mram, vicfpn);
 
+    printf("swap fpn: %i\n", swpfpn);
+    printf("target fpn: %i\n", tgtfpn);
+    printf("victim fpn: %i\n", vicfpn);
     /* Update page table */
     pte_set_swap(&mm->pgd[vicpgn], 0, swpfpn); /* Set the pte of victim page to swpfpn (which means it is stored in frame swpfpn) */
 
@@ -312,6 +315,7 @@ int __read(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE *data)
 
   pg_getval(caller->mm, currg->rg_start + offset, data, caller);
   printf("Read success, PID: %d \n", caller->pid);
+  print_pgtbl(caller, 0, -1);
   return 0;
 }
 
@@ -327,13 +331,13 @@ int pgread(
   __read(proc, 0, source, offset, &data);
 
   destination = (uint32_t) data;
-#ifdef IODUMP
+/*#ifdef IODUMP
   printf("read region=%d offset=%d value=%d\n", source, offset, data);
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); //print max TBL
 #endif
   MEMPHY_dump(proc->mram);
-#endif
+#endif*/
 
   return 0;
 }
@@ -357,6 +361,7 @@ int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 
   pg_setval(caller->mm, currg->rg_start + offset, value, caller);
   printf("Write success, PID: %d \n", caller->pid);
+  print_pgtbl(caller, 0, -1);
   return 0;
 }
 
@@ -367,13 +372,13 @@ int pgwrite(
 		uint32_t destination, // Index of destination register
 		uint32_t offset)
 {
-#ifdef IODUMP
+/*#ifdef IODUMP
   printf("write region=%d offset=%d value=%d\n", destination, offset, data);
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); //print max TBL
 #endif
   MEMPHY_dump(proc->mram);
-#endif
+#endif*/
 
   return __write(proc, 0, destination, offset, data);
 }
