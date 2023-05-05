@@ -9,19 +9,22 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <semaphore.h>
 
-/* Mutex lock for locking physical memory (making sure that two processes cannot access phymem at the same time) */
-pthread_mutex_t mutex;
-bool mutex_initialized = false; /* Check if mutex lock is initialized yet */
-
+sem_t mutex, wrt; /* Semaphore lock for locking physical memory (making sure that two processes cannot access phymem at the same time) */
+bool init;/* Check if mutex lock is initialized yet */
+int reader_count = 0;
+pthread_mutex_t free_frame_mutex; /* mutex lock for free frame list */
 
 /*
 * mutex_init() - initialize mutex lock if it is not initialized yet
 */
-int mutex_init(){
-   if (!mutex_initialized) {
-      pthread_mutex_init(&mutex, NULL);
-      mutex_initialized = true;
+int sem_initial(){
+   if (!init) {
+      sem_init(&mutex, 0, 1);
+      sem_init(&wrt, 0, 1);
+      pthread_mutex_init(&free_frame_mutex, NULL);
+      init = true;
       return 1;
    } else return 0; /* Not init */
 }
@@ -73,14 +76,24 @@ int MEMPHY_seq_read(struct memphy_struct *mp, int addr, BYTE *value)
  */
 int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
 {
-   if (!mutex_initialized) {
-      mutex_init();
+   if (!init) {
+      sem_initial();
    }
 
-   pthread_mutex_lock(&mutex);
+   /* lock the writer if there is one or more reader */
+   sem_wait(&mutex);
+   //printf("Lock reader mutex\n");
+   reader_count++;
+   if (reader_count == 1){
+      // printf("Reader count: %d, Lock writer\n", reader_count);
+      sem_wait(&wrt);
+   }
+   //printf("Unlock reader mutex\n");
+   sem_post(&mutex);
+
    if (mp == NULL)
    {
-      pthread_mutex_unlock(&mutex);
+      sem_post(&mutex);
       return -1;
    }
 
@@ -88,11 +101,19 @@ int MEMPHY_read(struct memphy_struct * mp, int addr, BYTE *value)
       *value = mp->storage[addr];
    else /* Sequential access device */
    {
-      pthread_mutex_unlock(&mutex);
+      sem_post(&mutex);
       return MEMPHY_seq_read(mp, addr, value);
    }
 
-   pthread_mutex_unlock(&mutex);
+   sem_wait(&mutex);
+   //printf("Lock reader mutex\n");
+   reader_count--;
+   //printf("Reader count: %d\n", reader_count);
+   if (reader_count == 0){
+      sem_post(&wrt);
+   }
+   //printf("Unlock reader mutex\n");
+   sem_post(&mutex);
    return 0;
 }
 
@@ -125,15 +146,16 @@ int MEMPHY_seq_write(struct memphy_struct * mp, int addr, BYTE value)
  */
 int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
 {
-   if (!mutex_initialized) {
-      mutex_init();
+   if (!init) {
+      sem_initial();
    }
    
-   pthread_mutex_lock(&mutex);
+   //printf("Lock writer mutex\n");
+   sem_wait(&wrt);
    //printf("Mutex lock is locked in MEMPHY_write \n");
    if (mp == NULL){
       //printf("Mutex lock is unlocked in MEMPHY_write \n");
-      pthread_mutex_unlock(&mutex);
+      sem_post(&wrt);
       return -1;
    }
 
@@ -142,7 +164,8 @@ int MEMPHY_write(struct memphy_struct * mp, int addr, BYTE data)
    else /* Sequential access device */
       return MEMPHY_seq_write(mp, addr, data);
    //printf("Mutex lock is unlocked in MEMPHY_write \n");
-   pthread_mutex_unlock(&mutex);
+      //printf("Lock writer mutex\n");
+   sem_post(&wrt);
    return 0;
 }
 
@@ -188,17 +211,17 @@ int MEMPHY_format(struct memphy_struct *mp, int pagesz)
 
 int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
 {
-   if (!mutex_initialized) {
-      mutex_init();
+   if (!init) {
+      sem_initial();
    }
    
-   pthread_mutex_lock(&mutex);
+   pthread_mutex_lock(&free_frame_mutex);
    //printf("Mutex lock is locked in MEMPHY_get_freefp \n");
    struct framephy_struct *fp = mp->free_fp_list; // get ffl
 
    if (fp == NULL){
       //printf("Mutex lock is unlocked in MEMPHY_get_freefp due to out of free frames \n");
-      pthread_mutex_unlock(&mutex);
+      pthread_mutex_unlock(&free_frame_mutex);
       return -1; // Out of free frames
 
    }
@@ -212,7 +235,7 @@ int MEMPHY_get_freefp(struct memphy_struct *mp, int *retfpn)
     */
    free(fp); // free frame from ffl
    //printf("Mutex lock is unlocked in MEMPHY_get_freefp \n");
-   pthread_mutex_unlock(&mutex);
+   pthread_mutex_unlock(&free_frame_mutex);
    return 0;
 }
 
@@ -227,11 +250,11 @@ int MEMPHY_dump(struct memphy_struct * mp)
 
 int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
 {
-   if (!mutex_initialized) {
-      mutex_init();
+   if (!init) {
+      sem_initial();
    }
    
-   pthread_mutex_lock(&mutex);
+   pthread_mutex_lock(&free_frame_mutex);
    struct framephy_struct *fp = mp->free_fp_list;
    struct framephy_struct *newnode = malloc(sizeof(struct framephy_struct));
 
@@ -239,7 +262,7 @@ int MEMPHY_put_freefp(struct memphy_struct *mp, int fpn)
    newnode->fpn = fpn;
    newnode->fp_next = fp;
    mp->free_fp_list = newnode;
-   pthread_mutex_unlock(&mutex);
+   pthread_mutex_unlock(&free_frame_mutex);
 
    return 0;
 }
