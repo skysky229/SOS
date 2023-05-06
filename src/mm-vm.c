@@ -91,6 +91,8 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
 
     *alloc_addr = rgnode.rg_start;
 
+    printf("Alloc success, PID: %d \n", caller->pid);
+    print_pgtbl(caller, 0, -1);
     return 0;
   }
 
@@ -318,7 +320,7 @@ int __read(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE *data)
 
   pg_getval(caller->mm, currg->rg_start + offset, data, caller);
   printf("Read success, PID: %d \n", caller->pid);
-  print_pgtbl(caller, 0, -1);
+  //print_pgtbl(caller, 0, -1);
   return 0;
 }
 
@@ -334,13 +336,13 @@ int pgread(
   __read(proc, 0, source, offset, &data);
 
   destination = (uint32_t) data;
-/*#ifdef IODUMP
+#ifdef IODUMP
   printf("read region=%d offset=%d value=%d\n", source, offset, data);
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); //print max TBL
 #endif
   MEMPHY_dump(proc->mram);
-#endif*/
+#endif
 
   return 0;
 }
@@ -364,7 +366,7 @@ int __write(struct pcb_t *caller, int vmaid, int rgid, int offset, BYTE value)
 
   pg_setval(caller->mm, currg->rg_start + offset, value, caller);
   printf("Write success, PID: %d \n", caller->pid);
-  print_pgtbl(caller, 0, -1);
+  //print_pgtbl(caller, 0, -1);
   return 0;
 }
 
@@ -375,13 +377,13 @@ int pgwrite(
 		uint32_t destination, // Index of destination register
 		uint32_t offset)
 {
-/*#ifdef IODUMP
+#ifdef IODUMP
   printf("write region=%d offset=%d value=%d\n", destination, offset, data);
 #ifdef PAGETBL_DUMP
   print_pgtbl(proc, 0, -1); //print max TBL
 #endif
   MEMPHY_dump(proc->mram);
-#endif*/
+#endif
 
   return __write(proc, 0, destination, offset, data);
 }
@@ -520,6 +522,7 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
     *retpgn = pg->pgn;
     mm->fifo_pgn = NULL;
     free(pg);
+    //printf("Find victim returned page: %d \n", *retpgn);
     //printf("End find_victim_page\n");
     return 0;
   }
@@ -538,6 +541,7 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
 
   /* The returned page */
   *retpgn = pg->pgn;
+  printf("Find victim returned page: %d \n", *retpgn);
   //printf("Victim page number is: %i\n", pg->pgn);
   free(pg);
 
@@ -606,6 +610,7 @@ int get_free_vmrg_area(struct pcb_t *caller, int vmaid, int size, struct vm_rg_s
           rgit->rg_next = NULL;
         }
       }
+      break;
     }
     else
     {

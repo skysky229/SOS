@@ -1,8 +1,16 @@
-1 4
+1 12
 alloc 500 0
-alloc 500 4
 free 0
+alloc 500 4
+free 4
 alloc 100 0
+write 100 0 20
+read 0 20 4
+free 0
+alloc 768 0
+write 100 0 20
+read 0 20 4
+free 0
 write 100 0 20
 read 0 300 4
 free 0

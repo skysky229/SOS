@@ -180,13 +180,13 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       find_victim_page(caller->mm, &vicpgn);
       //printf("Victim page number is: %i\n", vicpgn);
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
-      if(swpfpn != -1) /* A frame in swap is available */
+      if(swpfpn != -1  && vicpgn != -1) /* A frame in swap is available */
       {
         //printf("victim page number found: %i\n", vicpgn);
         //printf("swpfpn found: %d\n", swpfpn);
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
         //printf("Page %i: ", vicpgn);
-        //printf("pte for victim page: %x\n", pte_vicpgn);
+        //printf("pte for victim page: %08x\n", pte_vicpgn);
         //int vicfpn = PAGING_FPN(pte_vicpgn); // WRONG!!
         int vicfpn = GETVAL(pte_vicpgn,PAGING_PTE_FPN_MASK,PAGING_PTE_FPN_LOBIT);
         //printf("Victim frame number is: %i\n", vicpgn);
@@ -241,17 +241,14 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
   ret_alloc = alloc_pages_range(caller, incpgnum, &frm_lst); 
   // return a list of free frames to frm_lst
   // ret_alloc: give status result;
-
   if (ret_alloc < 0 && ret_alloc != -3000)
     return -1;
 
   /* Out of memory */
   if (ret_alloc == -3000) 
   {
-#ifdef MMDBG
-     printf("OOM: vm_map_ram out of memory \n");
-#endif
-     return -1;
+    printf("OOM: vm_map_ram out of memory \n");
+    return -1;
   }
 
   /* it leaves the case of memory is enough but half in ram, half in swap
@@ -337,6 +334,7 @@ int enlist_vm_rg_node(struct vm_rg_struct **rglist, struct vm_rg_struct* rgnode)
 int enlist_pgn_node(struct pgn_t **plist, int pgn)
 {
   //printf("Begin enlist_pgn_node.\n");
+  //printf("Added page: %d \n", pgn);
   struct pgn_t* pnode = malloc(sizeof(struct pgn_t));
 
   pnode->pgn = pgn;
