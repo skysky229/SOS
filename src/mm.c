@@ -269,7 +269,7 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
 int __swap_cp_page(struct memphy_struct *mpsrc, int srcfpn,
                 struct memphy_struct *mpdst, int dstfpn) 
 {
-    printf("Swap activated \n");
+    //printf("Swap activated \n");
   int cellidx;
   int addrsrc,addrdst;
   for(cellidx = 0; cellidx < PAGING_PAGESZ; cellidx++)
@@ -309,6 +309,13 @@ int init_mm(struct mm_struct *mm, struct pcb_t *caller)
 
   mm->mmap = vma;
 
+  // Init symbol table range
+  for(int i = 0; i <= PAGING_MAX_SYMTBL_SZ; i++)
+  {
+    caller->mm->symrgtbl[i].rg_start = 0;
+    caller->mm->symrgtbl[i].rg_end = 0;
+  }
+   
   return 0;
 }
 
@@ -427,8 +434,8 @@ int print_pgtbl(struct pcb_t *caller, uint32_t start, uint32_t end)
 
   for(pgit = pgn_start; pgit < pgn_end; pgit++)
   {
-     //printf("%08ld: %08x\n", pgit * sizeof(uint32_t), caller->mm->pgd[pgit]);
-    printf("PTE %i: %08x\n", pgit, caller->mm->pgd[pgit]);
+    printf("%08ld: %08x\n", pgit * sizeof(uint32_t), caller->mm->pgd[pgit]);
+    //printf("PTE %i: %08x\n", pgit, caller->mm->pgd[pgit]);
   }
 
   return 0;
