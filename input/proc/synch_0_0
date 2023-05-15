@@ -1,5 +1,7 @@
-0 3
-alloc 300 0
-alloc 300 4
-alloc 300 0
-free 4
+0 5
+alloc 100 1
+alloc 100 4
+alloc 100 0
+alloc 100 2
+alloc 100 5
+

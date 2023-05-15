@@ -1,15 +1,20 @@
-0 14
-alloc 300 0
-alloc 513 4
-write 11 0 4
-read 0 4 0
-read 0 4 0
-read 0 4 0
-write 30 0 5
-read 0 4 0
-read 0 4 0
-read 0 4 0
-read 0 5 4 
-alloc 500 3
-write 40 3 10
-read 3 10 4 
+0 19
+alloc 500 0
+free 0
+alloc 100 0
+alloc 100 4
+write 100 0 50
+read 0 50 0
+write 80 4 50
+read 4 50 0
+alloc 1000 3
+write 60 3 500
+write 70 3 700
+write 10 3 1000
+read 3 500 0
+free 2
+read 3 1000 0
+free 0
+read 3 700 0
+free 4
+free 3

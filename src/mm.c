@@ -53,11 +53,8 @@ int pte_set_swap(uint32_t *pte, int swptyp, int swpoff)
 {
   CLRBIT(*pte, PAGING_PTE_PRESENT_MASK);
   SETBIT(*pte, PAGING_PTE_SWAPPED_MASK);
-  //printf("In pte_set_swap: swptyp: %d, swpoff: %d, pte: %08x \n", swptyp, swpoff, *pte);
   SETVAL(*pte, swptyp, PAGING_PTE_SWPTYP_MASK, PAGING_PTE_SWPTYP_LOBIT);
-  //printf("In pte_set_swap: After set swptyp: pte: %08x \n", *pte);
   SETVAL(*pte, swpoff, PAGING_PTE_SWPOFF_MASK, PAGING_PTE_SWPOFF_LOBIT);
-  //printf("In pte_set_swap: After set swpoff: pte: %08x \n", *pte);
 
   return 0;
 }
@@ -69,12 +66,9 @@ int pte_set_swap(uint32_t *pte, int swptyp, int swpoff)
  */
 int pte_set_fpn(uint32_t *pte, int fpn)
 {
-  //printf("Setfpn called for pte %08x\n", *pte);
   SETBIT(*pte, PAGING_PTE_PRESENT_MASK);
   CLRBIT(*pte, PAGING_PTE_SWAPPED_MASK);
-  //printf("Setfpn's pte after set bit %08x\n", *pte);
   SETVAL(*pte, fpn, PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT); 
-  //printf("Setfpn's pte final %08x\n", *pte);
 
   return 0;
 }
@@ -89,14 +83,8 @@ int vmap_page_range(struct pcb_t *caller, // process call
            struct framephy_struct *frames,// list of the mapped frames (free frames)
               struct vm_rg_struct *ret_rg)// return mapped region, the real mapped fp
 {                                         // no guarantee all given pages are mapped
-  //uint32_t * pte = malloc(sizeof(uint32_t));
-  //printf("Begin vmap_page_range.\n");
   struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
-  //int  fpn;
   int pgit = 0;
-  // int pgn = PAGING_PGN(addr); // DON'T CARE ABOUT THIS FUNCTION 
-                              // --> KNOWS THAT IT CREATES PAGE NUMBER OUT OF ADDRESS GIVEN
-  
 
   ret_rg->rg_end = ret_rg->rg_start = addr; // at least the very first space is usable
 
@@ -106,43 +94,23 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
-  //printf("Number of mapping page of vm_page_range: %i\n", pgnum);
-  //printf("Current vm_end of vm_page_range: %i\n", addr);
   for(; pgit < pgnum; pgit++)
   {
     int pageAddr = addr + pgit * PAGING_PAGESZ;
     int pageNum = PAGING_PGN(pageAddr);
-    //printf("Page number of vm_page_range: %i\n", pageNum);
     fpit = fpit->fp_next;
     if(fpit == NULL)
-    //printf("frames numb: %d - vmap_page_range: ", fpn);
     {
       printf("fpit in mm.c is NULL \n");
       return -1;
     }
     int fpn = fpit->fpn;
-    //printf("Frame page number: %i\n", fpn);
     // set frame page number bits (from 0 to 12 --> 13 bits)
 
-    //caller->mm->pgd[pageNum] = ((caller->mm->pgd[pageNum]) & 0xffffe000) | (fpn & 0x1fff);
     pte_set_fpn(&(caller->mm->pgd[pageNum]), fpn); //SETVAL(caller->mm->pgd[pageNum],fpn,PAGING_PTE_FPN_MASK,0);
-    //caller->mm->pgd[pageNum] = PAGING_PTE_SET_PRESENT(caller->mm->pgd[pageNum]); // set present bit to 1
-    //caller->mm->pgd[pageNum] = PAGING_PTE_UNSET_SWAPPED(caller->mm->pgd[pageNum]); // set swapped bit to 0
     enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
   }
   ret_rg->rg_end = addr + pgnum * PAGING_PAGESZ;
-  //pte_set_fpn(caller->mm->pgd[pageNum], fpn);
-  //printf("page addr: %d - vmap_page_range \n", pageAddr);
-  //printf("frame test: %d \n", GETVAL(caller->mm->pgd[pageNum], PAGING_PTE_FPN_MASK, PAGING_PTE_FPN_LOBIT));
-  //enlist_pgn_node(&caller->mm->fifo_pgn, pageNum);
-  //printf("BP: ret_rg->rg_end = %ld - vmap_page_range\n", ret_rg->rg_end);
-  //printf("BP: ret_rg->rg_start = %ld - vmap_page_range\n", caller->mm->symrgtbl[rgid].rg_start);
-  //printf("BP: ret_rg->rg_end = %ld - vmap_page_range\n", caller->mm->symrgtbl[rgid].rg_end);
-  //caller->mm->symrgtbl[rgid].rg_start = old_sbrk;
-   /* Tracking for later page replacement activities (if needed)
-    * Enqueue new usage page */
-   //enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
-  //printf("End vmap_page_range.\n");
   return 0;
 }
 
@@ -155,10 +123,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
 
 int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struct** frm_lst)
 {
-  //printf("Begin alloc_pages_range.\n");
   int pgit, fpn;
-  //struct framephy_struct *newfp_str;
-  // initially: struct framephy_struct* frm_lst = NULL;
 
   for(pgit = 0; pgit < req_pgnum; pgit++)
   {
@@ -170,31 +135,18 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       temp->fpn = fpn;
     } 
     else 
-    {  // ERROR CODE of obtaining somes but not enough frames
-      //printf("End alloc_pages_range with return = -3000.\n\n");
-
-      // Page replacement for alloc if RAM is out of free frames
-      // WIP
-      
+    {  
       int vicpgn = -1, swpfpn = -1;
       find_victim_page(caller->mm, &vicpgn);
-      //printf("Victim page number is: %i\n", vicpgn);
       MEMPHY_get_freefp(caller->active_mswp, &swpfpn);
       if(swpfpn != -1  && vicpgn != -1) /* A frame in swap is available */
       {
-        //printf("victim page number found: %i\n", vicpgn);
-        //printf("swpfpn found: %d\n", swpfpn);
         uint32_t pte_vicpgn = caller->mm->pgd[vicpgn];
-        //printf("Page %i: ", vicpgn);
-        //printf("pte for victim page: %08x\n", pte_vicpgn);
-        //int vicfpn = PAGING_FPN(pte_vicpgn); // WRONG!!
         int vicfpn = GETVAL(pte_vicpgn,PAGING_PTE_FPN_MASK,PAGING_PTE_FPN_LOBIT);
-        //printf("Victim frame number is: %i\n", vicpgn);
         __swap_cp_page(caller->mram, vicfpn, caller->active_mswp, swpfpn);
         // change to 5-25 form
         pte_set_swap(&(caller->mm->pgd[vicpgn]), 0, swpfpn);
         temp->fpn = vicfpn;
-        //printf("Victim Frame Page Number: %i\n", vicfpn);
       }
       else return -3000; //if out of memory (frames)
     }
@@ -207,8 +159,6 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
       *frm_lst = temp;
     }
   }
-  //printf("End alloc_pages_range.\n");
-  //print_list_fp(*frm_lst);
   return 0;
 }
 
@@ -224,11 +174,8 @@ int alloc_pages_range(struct pcb_t *caller, int req_pgnum, struct framephy_struc
  */
 int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int incpgnum, struct vm_rg_struct *ret_rg)
 {
-  //printf("Begin vm_map_ram.\n");
   struct framephy_struct *frm_lst = NULL;
   int ret_alloc;
-  //printf("BP: astart = %i\n", astart);
-  //printf("BP: aend = %i\n", aend);
 
   /*@bksysnet: author provides a feasible solution of getting frames
    *FATAL logic in here, wrong behaviour if we have not enough page
@@ -256,7 +203,6 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
   int flag = vmap_page_range(caller, mapstart, incpgnum, frm_lst, ret_rg);
   if(flag == -1) return -1; // fpit is NULL
 
-  //printf("End vm_map_ram.\n");
   return 0;
 }
 
@@ -269,7 +215,6 @@ int vm_map_ram(struct pcb_t *caller, int astart, int aend, int mapstart, int inc
 int __swap_cp_page(struct memphy_struct *mpsrc, int srcfpn,
                 struct memphy_struct *mpdst, int dstfpn) 
 {
-    //printf("Swap activated \n");
   int cellidx;
   int addrsrc,addrdst;
   for(cellidx = 0; cellidx < PAGING_PAGESZ; cellidx++)
@@ -278,7 +223,6 @@ int __swap_cp_page(struct memphy_struct *mpsrc, int srcfpn,
     addrdst = dstfpn * PAGING_PAGESZ + cellidx;
 
     BYTE data;
-    //printf("addrsrc: %d, addrdst: %d \n", addrsrc, addrdst);
     MEMPHY_read(mpsrc, addrsrc, &data);
     MEMPHY_write(mpdst, addrdst, data);
   }
@@ -340,15 +284,12 @@ int enlist_vm_rg_node(struct vm_rg_struct **rglist, struct vm_rg_struct* rgnode)
 
 int enlist_pgn_node(struct pgn_t **plist, int pgn)
 {
-  //printf("Begin enlist_pgn_node.\n");
-  //printf("Added page: %d \n", pgn);
   struct pgn_t* pnode = malloc(sizeof(struct pgn_t));
 
   pnode->pgn = pgn;
   pnode->pg_next = *plist;
   *plist = pnode;
 
-  //printf("End enlist_pgn_node.\n");
   return 0;
 }
 
